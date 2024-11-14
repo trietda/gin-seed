@@ -1,12 +1,15 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
+	"gin-seed/app/database/connection"
+	"gin-seed/app/user/entity"
 	"gin-seed/app/user/model"
-)
+	"log"
 
-var users map[string]model.User = make(map[string]model.User)
-var credentials map[string]*model.Credential = make(map[string]*model.Credential)
+	"gorm.io/gorm"
+)
 
 const (
 	UserExistedError = iota
@@ -21,22 +24,55 @@ func (e SaveUserError) Error() string {
 }
 
 func SaveUser(user model.User) *SaveUserError {
-	if _, ok := credentials[user.Credential.Username]; ok {
-		return &SaveUserError{Code: UserExistedError}
+	db := connection.GetConnection()
+	result := db.Transaction(func(tx *gorm.DB) error {
+		tx.Create(&entity.User{
+			Id: user.Id,
+		})
+		tx.Create(&entity.Credential{
+			UserId:   user.Credential.UserId,
+			Username: user.Credential.Username,
+			Password: user.Credential.Password,
+		})
+		return nil
+	})
+
+	if result != nil {
+		log.Panic(result)
 	}
 
-	users[user.Id] = user
-	credentials[user.Credential.Username] = &user.Credential
 	return nil
 }
 
 func GetByUsername(username string) *model.User {
-	credential, ok := credentials[username]
+	db := connection.GetConnection()
 
-	if !ok {
-		return nil
+	var credential entity.Credential
+
+	if err := db.Where(&entity.Credential{Username: username}).Take(&credential).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+
+		log.Panic(err)
 	}
 
-	user := users[credential.UserId]
-	return &user
+	user := entity.User{Id: credential.UserId}
+	if err := db.Take(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+
+		log.Panic(err)
+	}
+
+	return &model.User{
+		Guest: model.Guest{},
+		Id:    user.Id,
+		Credential: model.Credential{
+			UserId:   user.Id,
+			Username: credential.Username,
+			Password: credential.Password,
+		},
+	}
 }

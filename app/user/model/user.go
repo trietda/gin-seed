@@ -25,3 +25,14 @@ type User struct {
 	Id         string
 	Credential Credential
 }
+
+func (u User) Login() *Session {
+	return &Session{
+		Id:           uuid.NewString(),
+		UserId:       u.Id,
+		RefreshToken: uuid.NewString(),
+		Metadata: &SessionMetadata{
+			Ip: u.Ip,
+		},
+	}
+}

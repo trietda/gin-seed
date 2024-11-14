@@ -1,0 +1,20 @@
+version: '3'
+
+dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
+
+tasks:
+  build:
+    cmds:
+      - go build -v -i cmd/server/main.go
+  dev:
+    cmds:
+      - air
+  "migrate:create":
+    cmds:
+      - migrate create -ext sql -dir migration {{.CLI_ARGS}}
+  "migrate:up":
+    cmds:
+      - migrate -database ${MIGRATE_DB} -path migration up {{.CLI_ARGS}}
+  "migrate:down":
+    cmds:
+      - migrate -database ${MIGRATE_DB} -path migration down {{.CLI_ARGS}}

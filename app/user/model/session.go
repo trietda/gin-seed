@@ -5,28 +5,21 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 )
 
-type RefreshToken = [16]byte
+type IJwtService interface {
+	NewJwt(jwt.Claims) string
+}
 
 type SessionMetadata struct {
-	Ip string
+	Ip string `json:"ip"`
 }
 
 type Session struct {
 	Id           string
 	UserId       string
-	RefreshToken RefreshToken
+	RefreshToken string
 	Metadata     *SessionMetadata
-}
-
-func NewSession(userId string, meta *SessionMetadata) *Session {
-	return &Session{
-		Id:           uuid.NewString(),
-		UserId:       userId,
-		RefreshToken: uuid.New(),
-	}
 }
 
 func (s *Session) GenerateAccessToken() (string, error) {

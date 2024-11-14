@@ -1,9 +1,46 @@
 package repository
 
-import "gin-seed/app/user/model"
+import (
+	"errors"
+	"gin-seed/app/database/connection"
+	"gin-seed/app/user/entity"
+	"gin-seed/app/user/model"
+	"log"
 
-var sessions map[string]model.Session = make(map[string]model.Session)
+	"gorm.io/gorm"
+)
 
 func SaveSession(session model.Session) {
-	sessions[session.Id] = session
+	db := connection.GetConnection()
+
+	result := db.Create(&entity.Session{
+		Id:           session.Id,
+		UserId:       session.UserId,
+		RefreshToken: session.RefreshToken,
+		Metadata:     session.Metadata,
+	})
+
+	if result.Error != nil {
+		log.Panic(result.Error)
+	}
+}
+
+func GetSession(refreshToken string) *model.Session {
+	db := connection.GetConnection()
+
+	var session entity.Session
+	if err := db.Where(&entity.Session{RefreshToken: refreshToken}).Take(&session).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+
+		log.Panic(err)
+	}
+
+	return &model.Session{
+		Id:           session.Id,
+		UserId:       session.UserId,
+		RefreshToken: session.RefreshToken,
+		Metadata:     session.Metadata,
+	}
 }

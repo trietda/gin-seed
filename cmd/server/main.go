@@ -21,6 +21,7 @@ func main() {
 	user := api.Group("users")
 	user.POST("/sessions", userhandler.Login)
 	user.POST("/", userhandler.Register)
+	user.POST("/accessTokens", userhandler.RefreshToken)
 	user.GET("/me", middleware.JwtAuth(), userhandler.Test)
 
 	r.Run(":3000")

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gin-seed/app/user/model"
 	"gin-seed/app/user/repository"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -57,7 +58,10 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	session := model.NewSession(user.Id, nil)
+	user.Guest = model.Guest{
+		Ip: c.ClientIP(),
+	}
+	session := user.Login()
 	repository.SaveSession(*session)
 
 	if jwt, err := session.GenerateAccessToken(); err != nil {
@@ -73,4 +77,31 @@ func Login(c *gin.Context) {
 func Test(c *gin.Context) {
 	claim := c.MustGet("userClaim")
 	c.JSON(http.StatusOK, claim)
+}
+
+type RefreshTokenDto struct {
+	RefreshToken string `json:"refreshToken"`
+}
+
+func RefreshToken(c *gin.Context) {
+	var body RefreshTokenDto
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
+	session := repository.GetSession(body.RefreshToken)
+
+	if session == nil {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	accessToken, err := session.GenerateAccessToken()
+
+	if err != nil {
+		log.Panic(err)
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"accessToken": accessToken})
 }
