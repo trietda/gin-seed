@@ -1,6 +1,10 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"errors"
+
+	"github.com/google/uuid"
+)
 
 type Guest struct {
 	Ip string
@@ -11,6 +15,10 @@ func NewGuest(ip string) *Guest {
 }
 
 func (g Guest) Register(credential *Credential) *User {
+	if credential == nil {
+    panic(errors.New("Empty credential"))
+	}
+
 	userId := uuid.NewString()
 	credential.UserId = userId
 	return &User{
