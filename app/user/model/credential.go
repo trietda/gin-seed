@@ -26,9 +26,5 @@ func NewCredential(username, password string) (*Credential, error) {
 func (c Credential) IsValidPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword(c.Password, []byte(password))
 
-	if err != nil {
-		return false
-	}
-
-	return true
+  return err == nil
 }

@@ -24,5 +24,7 @@ func main() {
 	user.POST("/accessTokens", userhandler.RefreshToken)
 	user.GET("/me", middleware.JwtAuth(), userhandler.Test)
 
-	r.Run(":3000")
+  if err := r.Run(":3000"); err != nil {
+    panic(err)
+  }
 }
