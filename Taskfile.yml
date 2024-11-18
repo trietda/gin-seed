@@ -4,8 +4,10 @@ dotenv: ['.env', '{{.ENV}}/.env.', '{{.HOME}}/.env']
 
 tasks:
   build:
+    env:
+      GODEBUG: madvdontneed=1
     cmds:
-      - go build -v -i cmd/server/main.go
+      - go build -ldflags="-s -w" -o cmd/server/main cmd/server/main.go
   dev:
     cmds:
       - air
